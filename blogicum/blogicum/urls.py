@@ -12,7 +12,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pages/', include('pages.urls', namespace='pages')),
     path('', include('blog.urls', namespace='blog')),
-    path('auth/', include('django.contrib.auth.urls')),
     path(
         'auth/registration/',
         CreateView.as_view(
@@ -22,6 +21,7 @@ urlpatterns = [
         ),
         name='registration',
     ),
+    path('auth/', include('django.contrib.auth.urls')),
 ]
 
 if settings.DEBUG:
