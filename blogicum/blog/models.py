@@ -1,5 +1,7 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+from django.urls import reverse
+
 
 MAX_LEN = 30
 
@@ -105,5 +107,26 @@ class Post(StatusModel):
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
 
+    def comment_count(self):
+        return self.comments.count()
+
     def __str__(self):
         return self.title[:MAX_LEN]
+
+
+class Comment(models.Model):
+    text = models.TextField('Текст комментария')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_absolute_url(self):
+        return reverse('post_detail', args=[str(self.post.id)])
+
+    class Meta:
+        ordering = ('created_at',)
