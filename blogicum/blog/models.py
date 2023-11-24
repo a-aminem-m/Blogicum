@@ -91,15 +91,6 @@ class Post(StatusModel):
         'Картинка у публикации',
         blank=True
     )
-    is_published = models.BooleanField(
-        default=True,
-        verbose_name='Опубликовано',
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
-    )
-    created_at = models.DateTimeField(
-        verbose_name='Добавлено',
-        auto_now_add=True
-    )
 
     class Meta:
         ordering = ('-pub_date',)
@@ -113,14 +104,13 @@ class Post(StatusModel):
         return self.title[:MAX_LEN]
 
 
-class Comment(models.Model):
+class Comment(StatusModel):
     text = models.TextField('Текст комментария')
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
