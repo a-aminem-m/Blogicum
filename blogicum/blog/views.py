@@ -64,6 +64,7 @@ def category_posts(request, category_slug):
     return render(request, 'blog/category.html', context)
 
 
+@login_required
 def create_post(request):
     form = PostForm(request.POST or None, files=request.FILES or None)
     if form.is_valid():
@@ -99,6 +100,16 @@ class DeletePostView(DeleteView):
     form_class = PostForm
     template_name = 'blog/create.html'
     success_url = reverse_lazy('blog:index')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if request.user == self.object.author or request.user.is_staff:
+            success_url = self.get_success_url()
+            self.object.delete()
+            return redirect(success_url)
+        else:
+            return self.render_to_response(self.get_context_data())
 
 
 def get_base_post_queryset2(author_username):
