@@ -34,8 +34,11 @@ def index(request):
     return render(request, 'blog/index.html', {'page_obj': page_obj})
 
 
-def post_detail(request, id):
-    post = get_object_or_404(get_base_post_queryset(), id=id)
+def post_detail(request, post_id):
+    post = get_object_or_404(Post.objects.select_related(
+        'author', 'location', 'category'), id=post_id)
+    if request.user != post.author:
+        post = get_object_or_404(get_base_post_queryset(), id=post_id)
     comments = post.comments.all()
     form = CommentForm()
     if request.method == 'POST':
@@ -73,7 +76,7 @@ def create_post(request):
         post.save()
         return redirect(
             'blog:profile',
-            username=request.user.username
+            request.user.username,
         )
     return render(request, 'blog/create.html', {'form': form})
 
@@ -125,7 +128,13 @@ def get_base_post_queryset2(author_username):
 
 def profile(request, username):
     user_profile = get_object_or_404(User, username=username)
-    post_list = get_base_post_queryset2(author_username=username)
+    if user_profile != request.user:
+        post_list = get_base_post_queryset2(author_username=username)
+    else:
+        post_list = user_profile.posts.all().select_related(
+            'author', 'location', 'category'
+        ).annotate(
+            comment_count=Count('comments')).order_by('-pub_date')
     paginator = Paginator(post_list, POSTS_LIMIT)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -161,27 +170,30 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 @login_required
 def add_comment(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
+    post = get_object_or_404(
+        Post.objects.select_related('author', 'location', 'category'),
+        id=post_id,
+    )
     form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
         comment.post = post
         comment.save()
-        return redirect('blog:post_detail', id=post_id)
+        return redirect('blog:post_detail', post_id=post_id)
     return render(request, 'blog/comment.html', {'form': form, 'post': post})
 
 
 def edit_comment(request, post_id, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     if request.user != comment.author:
-        return redirect('blog:post_detail', id=comment.post.id)
+        return redirect('blog:post_detail', post_id=comment.post.id)
     form = EditCommentForm(instance=comment)
     if request.method == 'POST':
         form = EditCommentForm(request.POST, instance=comment)
         if form.is_valid():
             form.save()
-            return redirect('blog:post_detail', id=comment.post.id)
+            return redirect('blog:post_detail', post_id=comment.post.id)
     context = {'comment': comment, 'form': form}
     return render(request, 'blog/comment.html', context)
 
@@ -195,8 +207,15 @@ class DeleteCommentView(DeleteView):
 
     def get_success_url(self):
         post_id = self.kwargs.get('post_id')
-        return reverse('blog:post_detail', kwargs={'id': post_id})
+        return reverse('blog:post_detail', kwargs={'post_id': post_id})
 
-    def delete(self, request, *args, **kwargs):
-        super().delete(request, *args, **kwargs)
-        return redirect(self.get_success_url())
+    def dispatch(self, request, *args, **kwargs):
+        comment = get_object_or_404(
+            Comment, id=self.kwargs['comment_id'], post__is_published=True
+        )
+        if comment.author != self.request.user:
+            return redirect(
+                'blog:post_detail',
+                post_id=self.kwargs.get('post_id')
+            )
+        return super().dispatch(request, *args, **kwargs)
