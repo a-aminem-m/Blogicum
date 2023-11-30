@@ -1,3 +1,7 @@
+## Acknowledgements
+
+This project was developed during the "Python Developer" training program at [Yandex.Praktikum](https://praktikum.yandex.com/), as a part of the learning curriculum.
+
 # Blogicum
 
 Blogiсum is a social network designed for publishing personal diaries. Users can create their own pages and share posts categorized into topics such as **travel**, **culinary**, or **python development**. Additionally, users can optionally associate a location with each post, enhancing the overall user experience.
