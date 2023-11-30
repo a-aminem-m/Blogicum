@@ -1,6 +1,6 @@
 ## Acknowledgements
 
-This project was developed during the "Python Developer" training program at [Yandex.Praktikum](https://praktikum.yandex.com/), as a part of the learning curriculum.
+This project was developed during the "Python Developer" training program at [Yandex.Praktikum](https://practicum.yandex.ru/), as a part of the learning curriculum.
 
 # Blogicum
 
