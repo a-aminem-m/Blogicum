@@ -2,7 +2,7 @@ from django.views.generic import RedirectView
 from django.urls import path, reverse_lazy
 from .views import (add_comment, category_posts, create_post,
                     DeleteCommentView, DeletePostView, edit_comment,
-                    EditPostView, EditProfileUpdateView, index, post_detail,
+                    EditPostView, EditProfileView, index, post_detail,
                     profile)
 
 
@@ -31,7 +31,7 @@ urlpatterns = [
          RedirectView.as_view(url=reverse_lazy('password_change')),
          name='custom_password_change'),
     path('profile/edit_profile/',
-         EditProfileUpdateView.as_view(),
+         EditProfileView.as_view(),
          name='edit_profile'),
     path('profile/<username>/', profile, name='profile'),
 

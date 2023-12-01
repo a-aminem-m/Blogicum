@@ -7,30 +7,38 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import DeleteView, UpdateView
+
 from .forms import CommentForm, EditCommentForm, EditProfileForm, PostForm
 from .models import Category, Comment, Post
 
+from . import constants
 
-POSTS_LIMIT = 10
+
+def get_paginated_posts(post_list, posts_limit):
+    paginator = Paginator(post_list, posts_limit)
+    return paginator
 
 
 def get_base_post_queryset():
-    current_time = timezone.now()
-    base_queryset = Post.objects.filter(
-        pub_date__lte=current_time,
+    return Post.objects.filter(
+        pub_date__lte=timezone.now(),
         is_published=True,
         category__is_published=True,
-    ).select_related('author', 'location', 'category')
-    return base_queryset.annotate(
+    ).select_related(
+        'author',
+        'location',
+        'category'
+    ).annotate(
         comment_count=Count('comments')
     ).order_by('-pub_date')
 
 
 def index(request):
     post_list = get_base_post_queryset()
-    paginator = Paginator(post_list, POSTS_LIMIT)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = get_paginated_posts(
+        post_list, constants.POSTS_LIMIT
+    ).get_page(page_number)
     return render(request, 'blog/index.html', {'page_obj': page_obj})
 
 
@@ -56,13 +64,17 @@ def post_detail(request, post_id):
 
 
 def category_posts(request, category_slug):
-    category = get_object_or_404(Category.objects.filter(is_published=True),
-                                 slug=category_slug)
-    posts = get_base_post_queryset().filter(
-        category=category).order_by('-pub_date')
-    paginator = Paginator(posts, POSTS_LIMIT)
+    category = get_object_or_404(
+        Category,
+        slug=category_slug,
+        is_published=True
+    )
+    posts = get_base_post_queryset().filter(category=category)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = get_paginated_posts(
+        posts,
+        constants.POSTS_LIMIT
+    ).get_page(page_number)
     context = {'category': category, 'page_obj': page_obj}
     return render(request, 'blog/category.html', context)
 
@@ -111,31 +123,19 @@ class DeletePostView(DeleteView):
             success_url = self.get_success_url()
             self.object.delete()
             return redirect(success_url)
-        else:
-            return self.render_to_response(self.get_context_data())
-
-
-def get_base_post_queryset2(author_username):
-    current_time = timezone.now()
-    base_queryset = Post.objects.filter(
-        pub_date__lte=current_time,
-        is_published=True,
-        category__is_published=True,
-        author__username=author_username,
-    ).select_related('author', 'location', 'category')
-    return base_queryset
+        return self.render_to_response(self.get_context_data())
 
 
 def profile(request, username):
     user_profile = get_object_or_404(User, username=username)
     if user_profile != request.user:
-        post_list = get_base_post_queryset2(author_username=username)
+        post_list = get_base_post_queryset().filter(author__username=username)
     else:
         post_list = user_profile.posts.all().select_related(
             'author', 'location', 'category'
         ).annotate(
             comment_count=Count('comments')).order_by('-pub_date')
-    paginator = Paginator(post_list, POSTS_LIMIT)
+    paginator = Paginator(post_list, constants.POSTS_LIMIT)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
@@ -146,7 +146,7 @@ def profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
-class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
+class EditProfileView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = EditProfileForm
     template_name = 'blog/user.html'
@@ -171,7 +171,7 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(
-        Post.objects.select_related('author', 'location', 'category'),
+        get_base_post_queryset(),
         id=post_id,
     )
     form = CommentForm(request.POST)
@@ -187,13 +187,13 @@ def add_comment(request, post_id):
 def edit_comment(request, post_id, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     if request.user != comment.author:
-        return redirect('blog:post_detail', post_id=comment.post.id)
+        return redirect(comment.post.get_absolute_url())
     form = EditCommentForm(instance=comment)
     if request.method == 'POST':
         form = EditCommentForm(request.POST, instance=comment)
         if form.is_valid():
             form.save()
-            return redirect('blog:post_detail', post_id=comment.post.id)
+            return redirect(comment.post.get_absolute_url())
     context = {'comment': comment, 'form': form}
     return render(request, 'blog/comment.html', context)
 
@@ -210,12 +210,17 @@ class DeleteCommentView(DeleteView):
         return reverse('blog:post_detail', kwargs={'post_id': post_id})
 
     def dispatch(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, id=post_id)
+
         comment = get_object_or_404(
-            Comment, id=self.kwargs['comment_id'], post__is_published=True
+            Comment,
+            id=self.kwargs['comment_id'],
+            post=post,
+            post__is_published=True
         )
+
         if comment.author != self.request.user:
-            return redirect(
-                'blog:post_detail',
-                post_id=self.kwargs.get('post_id')
-            )
+            return redirect(comment.post.get_absolute_url())
+
         return super().dispatch(request, *args, **kwargs)

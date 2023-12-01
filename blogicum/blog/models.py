@@ -1,8 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 
-
-MAX_LEN = 30
+from . import constants
 
 
 class StatusModel(models.Model):
@@ -22,7 +22,7 @@ class StatusModel(models.Model):
 
 class Location(StatusModel):
     name = models.CharField(
-        max_length=256,
+        max_length=constants.MAX_LENGTH,
         verbose_name='Название места',
     )
 
@@ -31,12 +31,12 @@ class Location(StatusModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name[:MAX_LEN]
+        return self.name[:constants.MAX_LEN]
 
 
 class Category(StatusModel):
     title = models.CharField(
-        max_length=256,
+        max_length=constants.MAX_LENGTH,
         verbose_name='Заголовок'
     )
     description = models.TextField(
@@ -55,11 +55,14 @@ class Category(StatusModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:MAX_LEN]
+        return self.title[:constants.MAX_LEN]
 
 
 class Post(StatusModel):
-    title = models.CharField(max_length=256, verbose_name='Заголовок')
+    title = models.CharField(
+        max_length=constants.MAX_LENGTH,
+        verbose_name='Заголовок'
+    )
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
@@ -101,7 +104,10 @@ class Post(StatusModel):
         return self.comments.count()
 
     def __str__(self):
-        return self.title[:MAX_LEN]
+        return self.title[:constants.MAX_LEN]
+
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', args=[str(self.id)])
 
 
 class Comment(StatusModel):
