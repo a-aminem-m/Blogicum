@@ -10,13 +10,11 @@ from django.views.generic import DeleteView, UpdateView
 
 from .forms import CommentForm, EditCommentForm, EditProfileForm, PostForm
 from .models import Category, Comment, Post
-
 from . import constants
 
 
 def get_paginated_posts(post_list, posts_limit):
-    paginator = Paginator(post_list, posts_limit)
-    return paginator
+    return Paginator(post_list, posts_limit)
 
 
 def get_base_post_queryset():

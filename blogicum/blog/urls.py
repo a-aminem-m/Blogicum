@@ -1,5 +1,6 @@
 from django.views.generic import RedirectView
 from django.urls import path, reverse_lazy
+
 from .views import (add_comment, category_posts, create_post,
                     DeleteCommentView, DeletePostView, edit_comment,
                     EditPostView, EditProfileView, index, post_detail,
