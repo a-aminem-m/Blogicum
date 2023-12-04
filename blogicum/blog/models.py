@@ -8,11 +8,11 @@ from . import constants
 class StatusModel(models.Model):
     is_published = models.BooleanField(
         default=True,
-        verbose_name='Опубликовано',
-        help_text='Снимите галочку, чтобы скрыть публикацию.'
+        verbose_name='Published',
+        help_text='Uncheck the box to hide the post.'
     )
     created_at = models.DateTimeField(
-        verbose_name='Добавлено',
+        verbose_name='Added',
         auto_now_add=True
     )
 
@@ -23,12 +23,12 @@ class StatusModel(models.Model):
 class Location(StatusModel):
     name = models.CharField(
         max_length=constants.MAX_LENGTH,
-        verbose_name='Название места',
+        verbose_name='Place name',
     )
 
     class Meta:
-        verbose_name = 'местоположение'
-        verbose_name_plural = 'Местоположения'
+        verbose_name = 'location'
+        verbose_name_plural = 'Locations'
 
     def __str__(self):
         return self.name[:constants.MAX_LEN]
@@ -37,22 +37,23 @@ class Location(StatusModel):
 class Category(StatusModel):
     title = models.CharField(
         max_length=constants.MAX_LENGTH,
-        verbose_name='Заголовок'
+        verbose_name='Title'
     )
     description = models.TextField(
-        verbose_name='Описание'
+        verbose_name='Description'
     )
     slug = models.SlugField(
         max_length=64,
         unique=True,
-        verbose_name='Идентификатор',
-        help_text=('Идентификатор страницы для URL; '
-                   'разрешены символы латиницы, цифры, дефис и подчёркивание.')
+        verbose_name='ID',
+        help_text=('The page ID for the URL; '
+                   'latin characters, numbers, ',
+                   'hyphens and underscores are allowed.')
     )
 
     class Meta:
-        verbose_name = 'категория'
-        verbose_name_plural = 'Категории'
+        verbose_name = 'category'
+        verbose_name_plural = 'Categories'
 
     def __str__(self):
         return self.title[:constants.MAX_LEN]
@@ -61,18 +62,18 @@ class Category(StatusModel):
 class Post(StatusModel):
     title = models.CharField(
         max_length=constants.MAX_LENGTH,
-        verbose_name='Заголовок'
+        verbose_name='Title'
     )
-    text = models.TextField(verbose_name='Текст')
+    text = models.TextField(verbose_name='Text')
     pub_date = models.DateTimeField(
-        verbose_name='Дата и время публикации',
-        help_text=('Если установить дату и время '
-                   'в будущем — можно делать отложенные публикации.')
+        verbose_name='Date and time of publication',
+        help_text=('If you set a date and time in the future, ',
+                   'you can make deferred publications.')
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор публикации',
+        verbose_name='The author of the publication',
         related_name='posts'
     )
     location = models.ForeignKey(
@@ -80,25 +81,25 @@ class Post(StatusModel):
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        verbose_name='Местоположение',
+        verbose_name='Location',
         related_name='posts'
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name='Категория',
+        verbose_name='Category',
         related_name='posts'
     )
     image = models.ImageField(
-        'Картинка у публикации',
+        'The picture of the publication',
         blank=True
     )
 
     class Meta:
         ordering = ('-pub_date',)
-        verbose_name = 'публикация'
-        verbose_name_plural = 'Публикации'
+        verbose_name = 'publication'
+        verbose_name_plural = 'Publications'
 
     def comment_count(self):
         return self.comments.count()
@@ -111,7 +112,7 @@ class Post(StatusModel):
 
 
 class Comment(StatusModel):
-    text = models.TextField('Текст комментария')
+    text = models.TextField('The text of the comment')
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,

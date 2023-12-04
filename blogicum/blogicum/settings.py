@@ -84,7 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'ru-RU'
+LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'Europe/Paris'
 
