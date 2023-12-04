@@ -2,6 +2,10 @@
 
 ###### (This project was developed during the "Python Developer" training program at [Yandex.Practicum](https://practicum.yandex.ru/), as a part of the learning curriculum).
 
+## Project Attribution
+
+###### The HTML templates and test files for this project were provided as part of the coursework at [Yandex.Practicum](https://practicum.yandex.ru/). The backend implementation, including models, views, and logic, was entirely developed by me during the course.
+
 Blogiсum is a social network designed for publishing personal diaries. Users can create their own pages and share posts categorized into topics such as **travel**, **culinary**, or **python development**. Additionally, users can optionally associate a location with each post, enhancing the overall user experience.
 
 ## Project Structure
